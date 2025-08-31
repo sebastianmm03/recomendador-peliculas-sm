@@ -7,7 +7,11 @@ export async function GET(
 ) {
     try {
         const id = params.id;
-        const data = await tmdb(`/movie/${id}/videos`, { language: "en-US" });
+        let data = await tmdb(`/movie/${id}/videos`, { language: "es-MX" });
+        if (!data.results?.length) {
+            data = await tmdb(`/movie/${id}/videos`, { language: "en-US" });
+        }
+
         // Busca el mejor tráiler de YouTube
         type tmdbVideo = {
             site: string;

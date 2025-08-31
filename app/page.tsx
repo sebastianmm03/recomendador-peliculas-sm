@@ -228,7 +228,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => toggleTrailer(m.id)}
-                  className="text-xs px-3 py-1 rounded bg-gray-700 hover:bg-blue-500 transition self-start"
+                  className="text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-500 transition self-start"
                 >
                   {openTrailerFor === m.id ? "Cerrar tráiler" : "Ver tráiler"}
                 </button>
