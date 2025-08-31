@@ -6,19 +6,21 @@ type TmdbVideo = {
     type: string;
     key: string;
     official?: boolean;
-    iso_639_1?: string;  // idioma
-    iso_3166_1?: string; // país
+    iso_639_1?: string;
+    iso_3166_1?: string;
 };
 
-// 👇 Nota: en Next 15, params llega como Promise<{ id: string }>
 export async function GET(
     _req: NextRequest,
-    context: { params: Promise<{ id: string }> }
-): Promise<NextResponse<{ site: string | null; key: string | null } | { error: string }>> {
+    context: { params: Promise<{ id: string }> }   // 👈 params es Promise
+): Promise<
+    NextResponse<{ site: string | null; key: string | null }> |
+    NextResponse<{ error: string }>
+> {
     try {
-        const { id } = await context.params;
+        const { id } = await context.params;         // 👈 se hace await
 
-        // Intentamos primero en inglés; si no hay resultados, caemos a es-MX
+        // Primero inglés; si no hay, latino
         let data = await tmdb(`/movie/${id}/videos`, { language: "en-US" });
         if (!data.results?.length) {
             data = await tmdb(`/movie/${id}/videos`, { language: "es-MX" });
@@ -26,11 +28,8 @@ export async function GET(
 
         const results: TmdbVideo[] = data.results ?? [];
 
-        // Busca el mejor tráiler de YouTube (inglés/latino si es posible)
         const trailer =
-            results.find(
-                (v) => v.site === "YouTube" && v.type === "Trailer" && (v.iso_639_1 === "en")
-            ) ||
+            results.find((v) => v.site === "YouTube" && v.type === "Trailer" && v.iso_639_1 === "en") ||
             results.find(
                 (v) =>
                     v.site === "YouTube" &&
