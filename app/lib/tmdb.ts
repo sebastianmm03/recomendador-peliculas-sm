@@ -1,8 +1,12 @@
 //Se lee las variables de entorno definidas en .env.local
 const BASE = process.env.TMDB_BASE_URL || "https://api.themoviedb.org/3";
-const KEY = process.env.TMDB_API_KEY || "ba94f3246522d862a5738f3dedc031d0";
+const KEY = process.env.TMDB_API_KEY;
 const LOCALE = process.env.APP_LOCALE || "es-ES";
 const REGION = process.env.APP_REGION || "CO";
+
+if (!KEY) {
+  throw new Error("TMDB_API_KEY no está definida. Crea .env.local con TMDB_API_KEY.");
+}
 
 /**
  * Se llama a la API de TMDB.

@@ -37,3 +37,13 @@ Pequeña app que hace unas preguntas rápidas y sugiere películas usando la API
 - Guardar “favoritos” en localStorage.
 - Filtros por año o proveedor de streaming.
 - Tests básicos de endpoints.
+
+## Prompting usado (reglas de negocio)
+
+- “Eres un asistente de recomendación de películas…”
+- Si el usuario está **ligero** → prioriza **Comedia (35)**.
+- **Romántico** → **Romance (10749)**.
+- **Intenso** → exige `vote_average.gte ≥ 7`.
+- Energía **alta** → ordena por `vote_average.desc` y sube `vote_average.gte` a ≥ 7.3.
+- Energía **baja** → ordena por `popularity.desc`.
+- Sin contenido adulto y `vote_count.gte ≥ 200`.
