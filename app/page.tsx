@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 type Answers = {
@@ -29,6 +29,7 @@ function truncate(s: string | null | undefined, n = 180) {
 }
 
 export default function Home() {
+  // 1) useState primero
   const [form, setForm] = useState<Answers>({ mood: "", energy: "" });
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [openTrailerFor, setOpenTrailerFor] = useState<number | null>(null);
@@ -37,10 +38,6 @@ export default function Home() {
   >({});
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const toggle = (id: number) =>
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-  const set = (k: keyof Answers, v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -48,7 +45,17 @@ export default function Home() {
     string,
     string | number | boolean
   > | null>(null);
+
+  // 2) helpers
   const isComplete = form.mood && form.energy;
+  const toggle = (id: number) =>
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const set = (k: keyof Answers, v: string) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  //Trailer activo
+  const activeTrailer =
+    openTrailerFor != null ? trailers?.[openTrailerFor] : null;
 
   async function toggleTrailer(movieId: number) {
     // si ya está abierta, ciérrala
@@ -102,6 +109,14 @@ export default function Home() {
     setPage(1);
     await fetchPage(1, form);
   };
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenTrailerFor(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <main className="max-w-5xl mx-auto p-6">
@@ -232,43 +247,6 @@ export default function Home() {
                 >
                   {openTrailerFor === m.id ? "Cerrar tráiler" : "Ver tráiler"}
                 </button>
-
-                {openTrailerFor === m.id && (
-                  <div className="mt-2 rounded overflow-hidden border border-zinc-800">
-                    {(() => {
-                      const t = trailers[m.id];
-                      if (!t) {
-                        return (
-                          <div className="p-3 text-sm opacity-80">
-                            Cargando tráiler…
-                          </div>
-                        );
-                      }
-                      if (t.site === "YouTube" && t.key) {
-                        return (
-                          <div
-                            className="relative w-full"
-                            style={{ aspectRatio: "16 / 9" }}
-                          >
-                            <iframe
-                              className="absolute inset-0 w-full h-full"
-                              src={`https://www.youtube.com/embed/${t.key}?autoplay=1`}
-                              title={`Tráiler de ${m.title}`}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              referrerPolicy="strict-origin-when-cross-origin"
-                              allowFullScreen
-                            />
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="p-3 text-sm opacity-80">
-                          No encontramos un tráiler disponible.
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
               </div>
             </div>
           </article>
@@ -303,6 +281,54 @@ export default function Home() {
       {/* Mensaje vacío cuando se termina de cargar */}
       {!loading && usedParams && movies.length === 0 && (
         <p className="mt-4 opacity-70">Sin resultados con esos criterios.</p>
+      )}
+
+      {/* --------- 📍 PASO 3: MODAL --------- */}
+      {openTrailerFor !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setOpenTrailerFor(null)} // cerrar al clickar el fondo
+        >
+          <div
+            className="bg-zinc-900 border border-zinc-700 rounded-xl w-[92%] max-w-3xl p-4 relative"
+            onClick={(e) => e.stopPropagation()} // no cerrar si clicas dentro
+          >
+            {/* Botón cerrar */}
+            <button
+              onClick={() => setOpenTrailerFor(null)}
+              className="absolute top-2 right-3 text-2xl text-zinc-400 hover:text-white"
+            >
+              ×
+            </button>
+
+            {/* Contenido */}
+            {!activeTrailer && (
+              <div className="p-6 text-center opacity-80">
+                Cargando tráiler…
+              </div>
+            )}
+            {activeTrailer &&
+            activeTrailer.site === "YouTube" &&
+            activeTrailer.key ? (
+              <div className="w-full" style={{ aspectRatio: "16 / 9" }}>
+                <iframe
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${activeTrailer.key}?autoplay=1`}
+                  title="Tráiler"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              activeTrailer && (
+                <div className="p-6 text-center opacity-80">
+                  No encontramos un tráiler disponible.
+                </div>
+              )
+            )}
+          </div>
+        </div>
       )}
     </main>
   );
