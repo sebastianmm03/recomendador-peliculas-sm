@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Recomendador de Películas (Next.js + TMDB)
 
-## Getting Started
+Pequeña app que hace unas preguntas rápidas y sugiere películas usando la API de TMDB.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js (App Router) + React + TypeScript
+- Tailwind CSS
+- TMDB API (server-side)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuración
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clonar el repo
+2. `cp .env.local.example .env.local` y rellenar:
+   - `TMDB_API_KEY=...`
+   - `TMDB_BASE_URL=https://api.themoviedb.org/3`
+   - `APP_LOCALE=es-ES`
+   - `APP_REGION=CO`
+3. `npm install`
+4. `npm run dev` y abrir http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cómo funciona
 
-## Learn More
+- El **frontend** envía `{ mood, energy, page }` a `/api/recommend`.
+- El **backend** traduce las respuestas a parámetros de `/discover/movie` y añade paginación.
+- Se muestran tarjetas con póster, título, ⭐ y un resumen (con “Ver más/menos”).
+- Cada tarjeta permite abrir el **tráiler** (YouTube) inline.
 
-To learn more about Next.js, take a look at the following resources:
+## Decisiones
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- La API key se usa en el **servidor** (no se expone al cliente).
+- Paginación con botones Siguiente/Anterior (máx 500 páginas de TMDB).
+- Se evita filtrar por duración porque los metadatos de runtime son irregulares.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Mejoras futuras
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Guardar “favoritos” en localStorage.
+- Filtros por año o proveedor de streaming.
+- Tests básicos de endpoints.
