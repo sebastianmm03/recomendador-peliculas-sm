@@ -12,15 +12,12 @@ type TmdbVideo = {
 
 export async function GET(
     _req: NextRequest,
-    context: { params: Promise<{ id: string }> }   // 👈 params es Promise
-): Promise<
-    NextResponse<{ site: string | null; key: string | null }> |
-    NextResponse<{ error: string }>
-> {
+    context: { params: { id: string } } | { params: Promise<{ id: string }> }
+) {
     try {
-        const { id } = await context.params;         // 👈 se hace await
+        const p = context.params;
+        const { id } = p instanceof Promise ? await p : p;
 
-        // Primero inglés; si no hay, latino
         let data = await tmdb(`/movie/${id}/videos`, { language: "en-US" });
         if (!data.results?.length) {
             data = await tmdb(`/movie/${id}/videos`, { language: "es-MX" });
