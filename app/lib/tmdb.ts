@@ -1,43 +1,41 @@
-//Se lee las variables de entorno definidas en .env.local
-const BASE = process.env.TMDB_BASE_URL || "https://api.themoviedb.org/3";
 const KEY = process.env.TMDB_API_KEY;
-const LOCALE = process.env.APP_LOCALE || "es-ES";
-const REGION = process.env.APP_REGION || "CO";
 
 if (!KEY) {
   throw new Error("TMDB_API_KEY no está definida. Crea .env.local con TMDB_API_KEY.");
 }
 
-/**
- * Se llama a la API de TMDB.
- * @param path Ruta de TMDB, ej: "/discover/movie", "/trending/movie/day"
- * @param params Parámetros de búsqueda/filtros, ej: { sort_by: "popularity.desc" }
- */
+export async function tmdb(
+  path: string,
+  params: Record<string, string | number | boolean> = {}
+) {
+  const base = (process.env.TMDB_BASE_URL || "https://api.themoviedb.org/3").replace(/\/$/, "");
+  const pathClean = path.startsWith("/") ? path : `/${path}`;
+  const url = new URL(`${base}${pathClean}`);
 
-type TMDBParams = Record<string, string | number | boolean>;
+  const KEY = process.env.TMDB_API_KEY;
+  const LOCALE = process.env.APP_LOCALE || "es-MX";
+  const REGION = process.env.APP_REGION || "CO";
 
-export async function tmdb(path: string, params: TMDBParams = {}) {
-  //Se construye la URL con el path
-  const url = new URL(`${BASE}${path}`);
+  if (!KEY) {
+    throw new Error("TMDB_API_KEY no está definida. Crea .env.local con TMDB_API_KEY.");
+  }
 
-  //Se une la api, el idioma, la region y los params que se manden
-  const search = { api_key: KEY, language: LOCALE, region: REGION, ...params };
+  url.searchParams.set("api_key", KEY);
+  url.searchParams.set("language", LOCALE);
+  url.searchParams.set("region", REGION);
 
-  //Se mete cada parametro en el query si tiene valor
-  Object.entries(search).forEach(([k, v]) => {
+  Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== "") {
       url.searchParams.set(k, String(v));
     }
-  })
+  });
 
-  //Se hace la peticion de "no-store" para ver cambios inmediatos en dev
-  const res = await fetch(url.toString(), { cache: "no-store" })
+  // TEMP: si necesitas depurar, descomenta:
+  // console.log("TMDB URL =>", url.toString());
 
-  //Si TMDB responde con un error, se lanza un error claro como excepción
+  const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`TMDB API error: ${res.status}`);
   }
-
-  //Aqui se devuelve el json listo
   return res.json();
 }
