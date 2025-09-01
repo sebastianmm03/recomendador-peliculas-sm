@@ -151,7 +151,7 @@ Devuelve SOLO un JSON con estas claves:
   "energy": "",           // "", "baja","media","alta"
   "recency": "",          // "", "reciente","clasico"
   "language": "",         // "", "es","en"
-  "include_genres": [],   // array de strings: "ciencia ficcion", "fantasia", ...
+  "include_genres": [],   // array de strings
   "exclude_genres": []    // array de strings
 }
 Sin comentarios ni texto extra.
@@ -167,6 +167,7 @@ Sin comentarios ni texto extra.
                 { role: "user", content: prompt },
             ],
         });
+
         const raw = out.choices[0]?.message?.content ?? "{}";
         const parsed = JSON.parse(raw);
         const ans: Answers = {
@@ -178,11 +179,16 @@ Sin comentarios ni texto extra.
             exclude_genres: Array.isArray(parsed.exclude_genres) ? parsed.exclude_genres : [],
         };
         return ans;
-    } catch (e: any) {
-        console.error("OpenAI error:", e?.status, e?.message || e);
+    } catch (e: unknown) {
+        const status =
+            typeof e === "object" && e !== null && "status" in e
+                ? (e as { status?: number }).status
+                : undefined;
+        const message = e instanceof Error ? e.message : String(e);
+        console.error("OpenAI error:", status, message);
         return localIntent(prompt);
     }
-}
+} // ← IMPORTANTE: cerrar la función AQUÍ
 
 export async function POST(req: NextRequest) {
     try {
@@ -198,7 +204,7 @@ export async function POST(req: NextRequest) {
             name?: string;
             release_date?: string;
             first_air_date?: string;
-            poster_path?: string;
+            poster_path?: string | null;
             vote_average?: number;
             overview?: string;
         };
@@ -221,11 +227,11 @@ export async function POST(req: NextRequest) {
             params,
             page: data.page,
             total_pages: data.total_pages,
-            results: data.results,  // ← importante para tarjetas
+            results: data.results,
             assistant,
         });
     } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : "error";
-        return NextResponse.json({ ok: false, error: errorMessage }, { status: 500 });
+        const message = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ ok: false, error: message }, { status: 500 });
     }
 }
