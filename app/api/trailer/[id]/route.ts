@@ -23,6 +23,12 @@ async function fetchVideos(movieId: string, lang?: string): Promise<TmdbVideo[]>
     return (data?.results ?? []) as TmdbVideo[];
 }
 
+function uniqueByKey(videos: TmdbVideo[]): TmdbVideo[] {
+    const map = new Map<string, TmdbVideo>();
+    for (const v of videos) map.set(v.key, v);
+    return [...map.values()];
+}
+
 function pickBest(videos: TmdbVideo[]): TmdbVideo | null {
     const yt = videos.filter((v) => v.site === "YouTube");
     return (
@@ -41,21 +47,21 @@ function pickBest(videos: TmdbVideo[]): TmdbVideo | null {
 
 export async function GET(
     _req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
 
-        // Intentar varios idiomas; SIN helper tmdb() para no forzar language
-        const langs: (string | undefined)[] = ["es-MX", "es-ES", "es", "en-US", "en", undefined];
+        // Probar varios idiomas; no usamos helper para no forzar language fijo
+        const langs: ReadonlyArray<string | undefined> = ["es-MX", "es-ES", "es", "en-US", "en", undefined];
 
-        const lists = await Promise.allSettled(langs.map((l) => fetchVideos(id, l)));
-        const all: TmdbVideo[] = lists
-            .filter((r): r is PromiseFulfilledResult<TmdbVideo[]> => r.status === "fulfilled")
-            .flatMap((r) => r.value);
+        const settled = await Promise.allSettled(langs.map((l) => fetchVideos(id, l)));
+        const all: TmdbVideo[] = [];
+        for (const s of settled) {
+            if (s.status === "fulfilled") all.push(...s.value);
+        }
 
-        // Quitar duplicados por key
-        const uniq = Array.from(new Map(all.map((v) => [v.key, v])).values());
+        const uniq = uniqueByKey(all);
         const best = pickBest(uniq);
 
         return NextResponse.json({

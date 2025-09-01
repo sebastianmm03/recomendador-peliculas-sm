@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -12,8 +13,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="bg-zinc-950 text-zinc-100 antialiased">{children}</body>
+    <html lang="es" suppressHydrationWarning>
+      <body
+        className="bg-zinc-950 text-zinc-100 antialiased"
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }
